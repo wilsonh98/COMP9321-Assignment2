@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Property Price Predictor</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    </head>
+    <body>  
+        <script type="text/javascript">
+         function showValue(a,b) {
+           var div = document.getElementById('valuation-div');
+           var value = "overvalued";
+           if (b < 1500000) {
+            value = "undervalued";
+           }
+           var diff = 1500000 - b;
+           diff = Math.abs(diff);
+           div.textContent = `${a} is ${value} by $${diff}`
+           if (div.style.display == "none") {
+             div.style.display = "flex";
+           } else {
+             div.style.display = "none";
+           }
+         }
+         function showHide() {
+            var div = document.getElementById('suburb-div');
+            if (div.style.display == "none") {
+             div.style.display = "flex";
+           } else {
+             div.style.display = "none";
+           }
+         }
+        </script>        
+        <div class="container-fluid">
+            <div class="container-fluid">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                  <a class="navbar-brand" href="index.html">Property Price Prediction</a>
+                  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                      <li class="nav-item active">
+                        <a class="nav-link" href="buyer.html">Buyer <span class="sr-only">(current)</span></a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" href="seller.html">Seller</a>
+                      </li>
+                    </ul>
+                  </div>
+                </nav>
+            </div>
+            <div class="d-flex justify-content-center mt-5">
+                <form method='POST' onsubmit="showValue(document.getElementById('address').value, document.getElementById('value').value);return false;">
+                    <h3>Address Valuation</h3>
+                    Address:<br>
+                    <input type='text' id='address' required><br>
+                    Offered Price:<br>
+                    <input type='number' id='value' required><br>
+                    <input type='submit' value="Check Price" class="btn btn-primary mt-3">
+                </form>
+            </div>
+            <div id="valuation-div" style="margin:auto; width: 50%; justify-content: center; text-align: center; display:none;"></div>
+            <div class="d-flex justify-content-center mt-5">
+                <form method='POST' onsubmit="showHide(); return false;">
+                    <h3>Suburb Locator</h3>
+                    Price Range:<br>
+                    <div class="form-row">
+                        <div class="col">
+                            <input type='number' placeholder="Minimum Value" min="0">
+                        </div>
+                        <div class="col">
+                            <input type='number' placeholder="Maximum Value" min="0"><br>
+                        </div>
+                    </div>
+                    <input type='submit' value="Find Suburbs" class="btn btn-primary">
+                </form>
+            </div>
+            <div id="suburb-div" style="margin:auto; width: 50%; justify-content: center; text-align: center; display:none;">
+                <table class="table-hover" style="width:100%;">
+                    <tr>
+                        <th>Suburbs</th>
+                    </tr>
+                    <tr>
+                        <td>Carlton</td>
+                    </tr>
+                    <tr>
+                        <td>Docklands</td>
+                    </tr>
+                    <tr>
+                        <td>Southbank</td>
+                    </tr>
+                    <tr>
+                        <td>Melbourne</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
