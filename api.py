@@ -102,7 +102,7 @@ class Property_Suburb(Resource):
         prp = dict(df.loc[suburb])
         return prp
 
-    def put (self, suburbs):
+    # def put (self, suburbs):
 
 
 @api.route('/property/<int:post_codes>/')
@@ -118,24 +118,11 @@ class Property_PostCode(Resource):
         return prp
 
 
-@api.route('/property/<str:suburbs>/<str:price>/<bool:sortBy>/<bool:asc>/')
-class Property_Sort_Price(Resource):
+@api.route('/property/sort/<str:sort_by>/<bool:asc>')
+class Property_Sort(Resource):
 
-     def get(self, suburbs, sortBy, asc):
-        if sortBy:
-            # do sth
-        else:
-            # do sth else
-
-
-@api.route('/property/<int:suburbs>/<data:date>/<bool:sortBy>/<bool:asc>/')
-class Property_Sort_Date(Resource):
-
-     def get(self, suburbs, sortBy, asc):
-        if sortBy:
-            # do sth
-        else:
-            # do sth else
+     def get(self, sort_by, asc):
+        df.sort_values(by=[sort_by], ascending=asc)
 
 
 if __name__ == "__main__":
