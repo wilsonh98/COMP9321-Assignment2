@@ -67,21 +67,21 @@ def requires_auth(f):
     return decorated
 
 
-@api.route('/token')
-class Token(Resource):
-    @api.response(200, 'Successful')
-    @api.doc(description="Generates a authentication token")
-    @api.expect(credential_parser, validate=True)
-    def get(self):
-        args = credential_parser.parse_args()
+# @api.route('/token')
+# class Token(Resource):
+#     @api.response(200, 'Successful')
+#     @api.doc(description="Generates a authentication token")
+#     # @api.expect(credential_parser, validate=True)
+#     def get(self):
+#         args = credential_parser.parse_args()
 
-        username = args.get('username')
-        password = args.get('password')
+#         username = args.get('username')
+#         password = args.get('password')
 
-        if username == 'admin' and password == 'admin':
-            return {"token": auth.generate_token(username)}
+#         if username == 'admin' and password == 'admin':
+#             return {"token": auth.generate_token(username)}
 
-        return {"message": "authorization has been refused for those credentials."}, 401
+#         return {"message": "authorization has been refused for those credentials."}, 401
 
 
 
@@ -90,7 +90,7 @@ class Token(Resource):
 # .
 # .
 
-@api.route('/property/<str:suburbs>/')
+@api.route('/property/<string:suburbs>/')
 class Property_Suburb(Resource):
     # each suburb is spearated by a delimiter ';'
     def get(self, suburbs):
@@ -118,7 +118,7 @@ class Property_PostCode(Resource):
         return prp
 
 
-@api.route('/property/sort/<str:sort_by>/<bool:asc>')
+@api.route('/property/sort/<string:sort_by>/<int:asc>')
 class Property_Sort(Resource):
 
      def get(self, sort_by, asc):
