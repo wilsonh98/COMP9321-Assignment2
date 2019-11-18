@@ -90,8 +90,57 @@ class Token(Resource):
 # .
 # .
 
+@api.route('/property/<str:suburbs>/')
+class Property_Suburb(Resource):
+    # each suburb is spearated by a delimiter ';'
+    def get(self, suburbs):
+        suburbs_list = suburbs.split(';')
+        for suburb in suburbs_list:
+            if suburb not in df.index:
+                api.abort(404,  'Suburb {} does not exist'.format(suburb) )
+
+        prp = dict(df.loc[suburb])
+        return prp
+
+    def put (self, suburbs):
+
+
+@api.route('/property/<int:post_codes>/')
+class Property_PostCode(Resource):
+
+    def get(self, post_codes):
+        postcodes_list = post_codes.split(';')
+        for post_code in post_codes:
+            if post_code not in df.index:
+                api.abort(404,  'Post Code {} does not exist'.format(post_code) )
+
+        prp = dict(df.loc[post_code])
+        return prp
+
+
+@api.route('/property/<str:suburbs>/<str:price>/<bool:sortBy>/<bool:asc>/')
+class Property_Sort_Price(Resource):
+
+     def get(self, suburbs, sortBy, asc):
+        if sortBy:
+            # do sth
+        else:
+            # do sth else
+
+
+@api.route('/property/<int:suburbs>/<data:date>/<bool:sortBy>/<bool:asc>/')
+class Property_Sort_Date(Resource):
+
+     def get(self, suburbs, sortBy, asc):
+        if sortBy:
+            # do sth
+        else:
+            # do sth else
 
 
 if __name__ == "__main__":
     # do dataset stuff here
+    df = pd.read_csv('melb_data.csv')
+    df['BuildingArea'] = df['BuildingArea'].fillna(0)
+    df['YearBuilt'] = df['YearBuilt'].fillna(0)
     app.run(debug=True)
