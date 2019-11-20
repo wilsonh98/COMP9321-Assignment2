@@ -107,7 +107,7 @@ class Property_PostCode(Resource):
         ret = []
 
         for item in ds:
-            if str(ds[item]['Postcode']) in postcodes_list:
+            if str(int(ds[item]['Postcode'])) in postcodes_list:
                 ret.append(ds[item])
 
 
@@ -142,7 +142,20 @@ class Property_Suburb(Resource):
 class Property_Sort(Resource):
 
      def get(self, sort_by, asc):
-        df.sort_values(by=[sort_by], ascending=asc)
+        if asc:
+            df.sort_values(by=[sort_by], ascending=True, inplace=True)
+        else:
+            df.sort_values(by=[sort_by], ascending=False, inplace=True)
+
+        json_str = df.to_json(orient='index')
+        ds = json.loads(json_str)
+        ret = []
+
+        for item in ds:
+            ret.append(ds[item])
+
+        return ret
+
 
 
 if __name__ == "__main__":
@@ -150,4 +163,5 @@ if __name__ == "__main__":
     df = pd.read_csv('melb_data.csv')
     df['BuildingArea'] = df['BuildingArea'].fillna(0)
     df['YearBuilt'] = df['YearBuilt'].fillna(0)
+    df['Date'] =pd.to_datetime(df.Date)
     app.run(debug=True)
