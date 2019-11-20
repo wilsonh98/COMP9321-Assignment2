@@ -96,10 +96,12 @@ class Property_PostCode(Resource):
 
     def get(self, post_codes):
         postcodes_list = post_codes.split(';')
+        
+        #print(list(map(int,list(df['Postcode']))))
 
         for post_code in postcodes_list:
-            post_code = post_code.strip()
-            if post_code not in list(df['Postcode']):
+            post_code = int(post_code.strip())
+            if (post_code not in list(map(int,list(df['Postcode'])))):
                 api.abort(404,  'Post Code {} does not exist'.format(post_code) )
 
         json_str = df.to_json(orient='index')
@@ -164,4 +166,5 @@ if __name__ == "__main__":
     df['BuildingArea'] = df['BuildingArea'].fillna(0)
     df['YearBuilt'] = df['YearBuilt'].fillna(0)
     df['Date'] =pd.to_datetime(df.Date)
+    df.astype({'Postcode':'int64'}).dtypes
     app.run(debug=True)
