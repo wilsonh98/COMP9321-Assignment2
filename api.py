@@ -90,32 +90,52 @@ def requires_auth(f):
 # .
 # .
 
+
+@api.route('/property_pc/<string:post_codes>/')
+class Property_PostCode(Resource):
+
+    def get(self, post_codes):
+        postcodes_list = post_codes.split(';')
+
+        for post_code in postcodes_list:
+            post_code = post_code.strip()
+            if post_code not in list(df['Postcode']):
+                api.abort(404,  'Post Code {} does not exist'.format(post_code) )
+
+        json_str = df.to_json(orient='index')
+        ds = json.loads(json_str)
+        ret = []
+
+        for item in ds:
+            if str(ds[item]['Postcode']) in postcodes_list:
+                ret.append(ds[item])
+
+
+        return ret
+
 @api.route('/property/<string:suburbs>/')
 class Property_Suburb(Resource):
     # each suburb is spearated by a delimiter ';'
     def get(self, suburbs):
         suburbs_list = suburbs.split(';')
         for suburb in suburbs_list:
-            if suburb not in df.index:
+            suburb = suburb.strip()
+            if suburb not in list(df['Suburb']):
                 api.abort(404,  'Suburb {} does not exist'.format(suburb) )
+        json_str = df.to_json(orient='index')
+        ds = json.loads(json_str)
+        ret = []
 
-        prp = dict(df.loc[suburb])
-        return prp
+        for item in ds:
+            if ds[item]['Suburb'] in suburbs_list:
+                ret.append(ds[item])
+
+
+        return ret
 
     # def put (self, suburbs):
 
 
-@api.route('/property/<int:post_codes>/')
-class Property_PostCode(Resource):
-
-    def get(self, post_codes):
-        postcodes_list = post_codes.split(';')
-        for post_code in post_codes:
-            if post_code not in df.index:
-                api.abort(404,  'Post Code {} does not exist'.format(post_code) )
-
-        prp = dict(df.loc[post_code])
-        return prp
 
 
 @api.route('/property/sort/<string:sort_by>/<int:asc>')
