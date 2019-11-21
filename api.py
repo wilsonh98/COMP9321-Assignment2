@@ -47,6 +47,20 @@ app = Flask(__name__)
 api = Api(app, default="Housing", title="Melbourne Dataset", description="<description here>")
 
 
+def requires_admin_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('AUTH-TOKEN')
+        if not token:
+            abort(401, 'Authentication token is missing')
+        
+        if (token != 'admintoken'):
+            abort(401, "Not admin login")
+
+        return f(*args, **kwargs)
+    
+    return decorated
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -67,28 +81,98 @@ def requires_auth(f):
     return decorated
 
 
-# @api.route('/token')
-# class Token(Resource):
-#     @api.response(200, 'Successful')
-#     @api.doc(description="Generates a authentication token")
-#     # @api.expect(credential_parser, validate=True)
-#     def get(self):
-#         args = credential_parser.parse_args()
+credential_model = api.model('credential', {
+    'username': fields.String,
+    'password': fields.String
+})
 
-#         username = args.get('username')
-#         password = args.get('password')
-
-#         if username == 'admin' and password == 'admin':
-#             return {"token": auth.generate_token(username)}
-
-#         return {"message": "authorization has been refused for those credentials."}, 401
+credential_parser = reqparse.RequestParser()
+credential_parser.add_argument('username', type=str)
+credential_parser.add_argument('password', type=str)
 
 
+@api.route('/token')
+class Token(Resource):
+    @api.response(200, 'Successful')
+    @api.doc(description="Generates a authentication token")
+    # @api.expect(credential_parser, validate=True)
+    def get(self):
+        args = credential_parser.parse_args()
 
-# add @api.routes here
-# .
-# .
-# .
+        username = args.get('username')
+        password = args.get('password')
+
+        if username == 'admin' and password == 'admin':
+            return {"token": "admintoken"}
+        elif username == 'user' and password == 'pass':
+            return {"token": auth.generate_token(username)}
+
+        return {"message": "authorization has been refused for those credentials."}, 401
+
+
+
+@api.route('/crime/<int:post_code>/')
+class Crime_PostCode(Resource):
+    def get(self, post_code):
+        if post_code not in crime_df['Postcode'].values:
+            api.abort(404,  'Postcode {} does not exist'.format(post_code) )
+
+        crime_in_post_code = crime_df.loc[crime_df['Postcode'] == post_code]
+        total_crimes = crime_in_post_code['Postcode'].count()
+        crime_summary = crime_in_post_code.groupby(['Offence Division']).size()
+        
+        crime_dict = {
+            "total": int(total_crimes),
+            "crime_summary": crime_summary.to_json()
+        }
+
+        return crime_dict
+
+
+#singular value for the time being
+@api.route('/crime/<string:suburb>/')
+class Crime_Suburb(Resource):
+    def get(self, suburb):
+        # print("suburb is: ", suburb)
+        suburb = suburb.upper()
+        if suburb not in crime_df['Suburb/Town Name'].values:
+            api.abort(404,  'Suburb {} does not exist'.format(suburb) )
+        
+        crime_in_suburb = crime_df.loc[crime_df['Suburb/Town Name'] == suburb]
+        
+        total_crimes = crime_in_suburb['Suburb/Town Name'].count()
+        crime_summary = crime_in_suburb.groupby(['Offence Division']).size()
+        
+        crime_dict = {
+            "total": int(total_crimes),
+            "crime_summary": crime_summary.to_json()
+        }
+
+        return crime_dict
+
+
+
+@api.route('/schools/<string:suburb>/')
+class School_Suburb(Resource):
+    def get(self, suburb):
+        suburb = suburb.upper()
+        print("suburb is: ", suburb)
+        if suburb not in school_df['Postal_Town'].values:
+            api.abort(404,  'Suburb {} does not exist'.format(suburb) )
+
+        schools_in_suburb = school_df.loc[school_df['Postal_Town'] == suburb]
+        return dict(schools_in_suburb['School_Name'])
+
+
+#cant get schools by post code: it is within different csv
+'''@api.route('/schools/<int:post_code>/')
+class School_Suburb(Resource):
+    def get(self,post_code):
+        if post_code not in df['Postcode'].values:
+            api.abort(404,  'Suburb {} does not exist'.format(post_code) )
+
+        schools_in_suburb = df.loc[df['Postcode'] == post_code]
+        return dict(schools_in_suburb['School_Name']) '''
 
 
 @api.route('/property_pc/<string:post_codes>/')
@@ -166,5 +250,14 @@ if __name__ == "__main__":
     df['BuildingArea'] = df['BuildingArea'].fillna(0)
     df['YearBuilt'] = df['YearBuilt'].fillna(0)
     df['Date'] =pd.to_datetime(df.Date)
-    df.astype({'Postcode':'int64'}).dtypes
+    #df.astype({'Postcode':'int64'}).dtypes
+    
+    school_df = pd.read_csv('schools.csv', encoding = "ISO-8859-1")
+    school_df['Postal_Town'] = school_df['Postal_Town'].str.upper()
+
+    crime_temp = pd.read_excel('crime.xlsx')
+    col_list = ['Suburb/Town Name', 'Postcode', 'Offence Division']
+    crime_df = crime_temp[col_list]
+    
+    
     app.run(debug=True)
