@@ -1,5 +1,5 @@
 import pandas as pd
-from flask import Flask
+from flask import Flask, make_response
 from flask import request
 from flask_restplus import Resource, Api, abort
 from flask_restplus import fields
@@ -13,10 +13,40 @@ from functools import wraps
 # karl import
 import matplotlib.pyplot as plt # import matplotlib
 import numpy as np
+import io
 
-#@api.route(schools/graph/<string:suburb>)
+app = Flask(__name__)
+api = Api(app, default="Housing", title="Melbourne Dataset", description="<description here>")
 
-#@api.route(suburbs/graph/<string:suburb>)
+'''
+@api.route('schools/graph/<string:suburb>')
+@api.representation('image1/png')
+class School_stacked_bar(Resource):
+    def get(self, suburb):
+        suburb = suburb.upper()
+        print("Suburb is: ", suburb)
+        if suburb not in crime_df['Suburb/Town Name'].values:
+            api.abort(404, 'Suburb {} does not exist'.format(suburb) )
+            # args = file_upload.parse_args()
+            # if args['image'].mimetype == 'image/png':
+            #     args['image'].save(crime_timeline(suburb))
+            # else:
+            #     abort(404)
+
+@api.route('suburbs/graph/<string:suburb>')
+@api.representation('image2/png')
+class Housing_pie(Resource):
+    def get(self, suburb):
+        suburb = suburb.upper()
+        print("Suburb is: ", suburb)
+        if suburb not in crime_df['Suburb/Town Name'].values:
+            api.abort(404, 'Suburb {} does not exist'.format(suburb) )
+            # args = file_upload.parse_args()
+            # if args['image'].mimetype == 'image/png':
+            #     args['image'].save(crime_timeline(suburb))
+            # else:
+            #     abort(404)
+'''
 
 # FUNCTIONS TO PLOT
 
@@ -42,6 +72,19 @@ def housing_pie(suburb="Abbotsford"):
     
 #    print(df.to_string())
 
+    # img = io.StringIO()
+    # plt.savefig(img, format='png')
+    # img.seek(0)
+    # dictdf = df.to_dict()
+    # plot_url = base64.b64encode(img.getvalue())
+    output = io.BytesIO()
+    # plt.savefig(output, format='png')
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+    # return plot_url
+
 def school_stacked_bar(suburb="CRAIGIEBURN"):
 
     # read in and sanitise
@@ -60,6 +103,19 @@ def school_stacked_bar(suburb="CRAIGIEBURN"):
     
     # plotting
     df.plot.bar(stacked=True, title = "Education Sector and School Type by Suburb")
+    
+    # img = io.StringIO()
+    # plt.savefig(img, format='png')
+    # img.seek(0)
+    # dictdf = df.to_dict()
+    # plot_url = base64.b64encode(img.getvalue())
+    output = io.BytesIO()
+    # plt.savefig(output, format='png')
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+    # return plot_url
     
 #    print(df.head(5).to_string())
 
