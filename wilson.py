@@ -15,10 +15,10 @@ from flask_restplus import inputs
 from flask_restplus import reqparse
 import base64
 import json
+import werkzeug
 from time import time
 from functools import wraps
-import flask_profiler
-
+from flask_profiler import Profiler
 
 SECRET_KEY = "A SECRET AND VERY LONG RANDOM STRING USED AS KEY"
 expires_in = 600
@@ -28,19 +28,27 @@ api = Api(app, default="Housing", title="Melbourne Dataset", description="<descr
 
 # https://github.com/muatik/flask-profiler
 app.config["flask_profiler"] = {
-    "enabled": app.config["DEBUG"], 
+    "enabled": app.config["DEBUG"],
     "storage": {
         "engine": "sqlite"
+    },
+    "basicAuth":{
+        "enabled": True,
+        "username": "admin",
+        "password": "admin"
     },
     "ignore": [
         "^/static/.*"
     ]
 }
 
-# def get_crime_graph(suburb):
-# upload_parser = api.parser()
-# upload_parser.add_argument('file', location='files',
-#                            type=FileStorage, required=True)
+profiler = Profiler()  # You can have this in another module
+profiler.init_app(app)
+# Or just Profiler(app)
+
+# file_upload = reqparse.RequestParser()
+# file_upload.add_argument('image', location='files',
+#                            type=werkzeug.datastructures.FileStorage, required=True, help="PNG Image")
 
 @api.route('/crimes/timeline/<string:suburb>')
 @api.representation('image/png')
@@ -48,13 +56,15 @@ class Crime_Timeline(Resource):
     def get(self, suburb):
         suburb = suburb.upper()
         print("Suburb is: ", suburb)
-
         if suburb not in crime_df['Suburb/Town Name'].values:
             api.abort(404, 'Suburb {} does not exist'.format(suburb) )
-
-        bytes_obj = crime_timeline(suburb)
-        return bytes_obj
-        # return send_file(bytes_obj, mimetype='image/png')
+        # args = file_upload.parse_args()
+        # if args['image'].mimetype == 'image/png':
+        #     args['image'].save(crime_timeline(suburb))
+        # else:
+        #     abort(404)
+        
+        return crime_timeline(suburb)
 
 @api.route('/prediction/<distance>')
 # @api.route('/prediction/<float:distance>')
@@ -69,15 +79,6 @@ class Price_Prediction(Resource):
         price = str(round(price_prediction(dist=distance), 2)) 
         price = "$" + price
         return {"Price": price}   
-
-# In order to active flask-profiler, you have to pass flask
-# app as an argument to flask-profiler.
-# All the endpoints declared so far will be tracked by flask-profiler.
-flask_profiler.init_app(app)
-
-
-# endpoint declarations after flask_profiler.init_app() will be
-# hidden to flask_profiler.
 
 
 def price_prediction(dist=2.5, prop_type="h"):
@@ -105,11 +106,16 @@ def crime_timeline(suburb="abbotsford"):
     df.plot(kind='line',y='Count',color='red', title="Crime timeline of " + suburb)
     # img = io.StringIO()
     # plt.savefig(img, format='png')
-    # plt.close()
     # img.seek(0)
-    dictdf = df.to_dict()
+    # dictdf = df.to_dict()
     # plot_url = base64.b64encode(img.getvalue())
-    return dictdf
+    output = io.BytesIO()
+    # plt.savefig(output, format='png')
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+    # return plot_url
 
 if __name__ == "__main__":
     crime_df = pd.read_csv("crime.csv", dtype={"Incidents Recorded": str})
