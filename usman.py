@@ -25,6 +25,12 @@ api = Api(app, default="Housing", title="Melbourne Dataset", description="<descr
 # .
 # .
 
+@api.route('/realEstateStatistics')
+class real_estate(Resource):
+    def get(self):
+        real_estate = housing_df.groupby('SellerG', as_index=False).size().sort_values(ascending=False)
+        return real_estate.to_json()
+
 # Average prices summary of entire Melbourne: returning each suburb and values
 @api.route('/suburbs/averagePrice')
 class suburb_average_all(Resource):
