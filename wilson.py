@@ -15,7 +15,6 @@ from flask_restplus import inputs
 from flask_restplus import reqparse
 import base64
 import json
-import werkzeug
 from time import time
 from functools import wraps
 from flask_profiler import Profiler
@@ -33,6 +32,7 @@ dashboard.bind(app)
 
 @api.route('/crimes/timeline/<string:suburb>')
 class Crime_Timeline(Resource):
+    @api.expect(fields.String)
     def get(self, suburb):
         suburb = suburb.upper()
         print("Suburb is: ", suburb)
@@ -42,8 +42,8 @@ class Crime_Timeline(Resource):
         return crime_timeline(suburb)
 
 @api.route('/prediction/<distance>', defaults={"prop_type": "h"})
-@api.route('/prediction/<distance>/<string:prop_type>')
-# @api.route('/prediction/<float:distance>')
+@api.param('prop_type', "A prop type (h, t, u)")
+@api.param('distance', "A float between 0 and 35")
 class Price_Prediction(Resource):
     def get(self, distance, prop_type):
         try: 
