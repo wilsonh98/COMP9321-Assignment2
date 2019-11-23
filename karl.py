@@ -101,8 +101,3 @@ if __name__ == "__main__":
     school_df = pd.read_csv("schools.csv", encoding = "ISO-8859-1")
     melb_df = pd.read_csv("melb_data.csv")
     app.run(debug=True)
-if __name__ == "__main__":
-    housing_pie()
-    school_stacked_bar()
-    school_df = pd.read_csv("schools.csv")
-    melb_df = pd.read_csv("melb_data.csv")
