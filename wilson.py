@@ -49,6 +49,7 @@ profiler.init_app(app)
 # file_upload = reqparse.RequestParser()
 # file_upload.add_argument('image', location='files',
 #                            type=werkzeug.datastructures.FileStorage, required=True, help="PNG Image")
+parser = reqparse.RequestParser()
 
 @api.route('/crimes/timeline/<string:suburb>')
 @api.representation('image/png')
@@ -63,22 +64,22 @@ class Crime_Timeline(Resource):
         #     args['image'].save(crime_timeline(suburb))
         # else:
         #     abort(404)
-        
+
         return crime_timeline(suburb)
 
 @api.route('/prediction/<distance>')
 # @api.route('/prediction/<float:distance>')
 class Price_Prediction(Resource):
     def get(self, distance):
-        try: 
+        try:
             distance = float(distance)
         except ValueError:
             api.abort(400, "Not a valid input")
         if distance > 35 or distance < 0:
             api.abort(400, 'Distance is outside of CBD prediction')
-        price = str(round(price_prediction(dist=distance), 2)) 
+        price = str(round(price_prediction(dist=distance), 2))
         price = "$" + price
-        return {"Price": price}   
+        return {"Price": price}
 
 
 def price_prediction(dist=2.5, prop_type="h"):
@@ -93,7 +94,7 @@ def price_prediction(dist=2.5, prop_type="h"):
     regressor.fit(X,y)
     ds = [[dist]]
     y_pred = regressor.predict(ds)
-    return y_pred[0]    
+    return y_pred[0]
 
 def crime_timeline(suburb="abbotsford"):
     df = pd.read_csv('crime.csv', dtype={"Incidents Recorded": str})
