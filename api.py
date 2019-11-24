@@ -434,8 +434,10 @@ class Property_Sort(Resource):
         return ret
 
 @api.route('/crimes/timeline/<string:suburb>')
+@api.doc(params={'suburb': 'A suburb located near Melbourne'})
 class Crime_Timeline(Resource):
-    @api.expect(fields.String)
+    @api.response(200, 'Success')
+    @api.response(404, 'Suburb does not exist')
     def get(self, suburb):
         suburb = suburb.upper()
         print("Suburb is: ", suburb)
