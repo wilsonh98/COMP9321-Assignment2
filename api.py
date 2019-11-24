@@ -449,6 +449,8 @@ class Crime_Timeline(Resource):
 @api.param('prop_type', "A prop type (h, t, u)")
 @api.param('distance', "A float between 0 and 35")
 class Price_Prediction(Resource):
+    @api.response(200, 'Success')
+    @api.response(400, 'Invalid Input')
     def get(self, distance, prop_type):
         try: 
             distance = float(distance)
