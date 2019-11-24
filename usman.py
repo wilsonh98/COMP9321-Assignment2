@@ -133,7 +133,7 @@ if __name__ == "__main__":
     df = pd.read_csv('schools.csv', encoding = "ISO-8859-1")
     df['Postal_Town'] = df['Postal_Town'].str.upper()
 
-    crime_temp = pd.read_excel('crime.xlsx')
+    crime_temp = pd.read_csv('crime.csv')
     col_list = ['Suburb/Town Name', 'Postcode', 'Offence Division']
     crime_df = crime_temp[col_list]
 
