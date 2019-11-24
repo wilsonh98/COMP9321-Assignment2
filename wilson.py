@@ -29,14 +29,6 @@ api = Api(app, default="Housing", title="Melbourne Dataset", description="<descr
 
 dashboard.bind(app)
 
-<<<<<<< HEAD
-# file_upload = reqparse.RequestParser()
-# file_upload.add_argument('image', location='files',
-#                            type=werkzeug.datastructures.FileStorage, required=True, help="PNG Image")
-parser = reqparse.RequestParser()
-=======
->>>>>>> 137b05d364eacf4cea6e61ab77e70b46120e8f1d
-
 @api.route('/crimes/timeline/<string:suburb>')
 class Crime_Timeline(Resource):
     @api.expect(fields.String)
@@ -45,46 +37,25 @@ class Crime_Timeline(Resource):
         print("Suburb is: ", suburb)
         if suburb not in crime_df['Suburb/Town Name'].values:
             api.abort(404, 'Suburb {} does not exist'.format(suburb) )
-<<<<<<< HEAD
-        # args = file_upload.parse_args()
-        # if args['image'].mimetype == 'image/png':
-        #     args['image'].save(crime_timeline(suburb))
-        # else:
-        #     abort(404)
-
-=======
-        
->>>>>>> 137b05d364eacf4cea6e61ab77e70b46120e8f1d
         return crime_timeline(suburb)
 
 @api.route('/prediction/<distance>', defaults={"prop_type": "h"})
 @api.param('prop_type', "A prop type (h, t, u)")
 @api.param('distance', "A float between 0 and 35")
 class Price_Prediction(Resource):
-<<<<<<< HEAD
-    def get(self, distance):
-        try:
-=======
     def get(self, distance, prop_type):
         try: 
->>>>>>> 137b05d364eacf4cea6e61ab77e70b46120e8f1d
             distance = float(distance)
         except ValueError:
             api.abort(400, "Not a valid input")
         if distance > 35 or distance < 0:
             api.abort(400, 'Distance is outside of CBD prediction')
-<<<<<<< HEAD
-        price = str(round(price_prediction(dist=distance), 2))
-        price = "$" + price
-        return {"Price": price}
-=======
         if (prop_type == "h" or prop_type == "u" or prop_type == "t"):
             price = str(round(price_prediction(dist=distance, prop_type=prop_type), 2)) 
             price = "$" + price
             return {"Price": price}   
         else:
             api.abort(400, 'Property Type is not valid (h, t, u)')
->>>>>>> 137b05d364eacf4cea6e61ab77e70b46120e8f1d
 
 
 def price_prediction(dist, prop_type="h"):
