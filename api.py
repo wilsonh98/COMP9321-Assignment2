@@ -58,6 +58,26 @@ auth = AuthenticationToken(SECRET_KEY, expires_in)
 app = Flask(__name__)
 api = Api(app, default="Housing", title="Melbourne Dataset", description="<description here>")
 
+school_summary = api.model ('School Summary', {
+    "schools": fields.List(fields.String)
+})
+
+crime_summary_all = api.model('Overall Crime Report', {
+    'total': fields.Integer,
+    'crime_summary': fields.String("{\"A Crimes against the person\":72677}")
+})
+
+crime_summary = api.model('Crime Report', {
+    "suburb": fields.String("ALTONA NORTH"),
+    "postcode": fields.Integer,
+    'total': fields.Integer,
+    'crime_summary': fields.String("{\"A Crimes against the person\":72677}")
+})
+
+average_price_listing = api.model('Price Summary', {
+    "Suburb": fields.String("ALTONA NORTH"),
+    "Price": fields.Integer
+})
 
 def requires_admin_auth(f):
     @wraps(f)
@@ -129,6 +149,8 @@ class Token(Resource):
 
 
 @api.route('/realEstateStatistics')
+@api.response(200, 'Success')
+@api.response(400, 'Bad Request')
 class real_estate(Resource):
     def get(self):
         real_estate = housing_df.groupby('SellerG', as_index=False).size().sort_values(ascending=False)
@@ -137,6 +159,8 @@ class real_estate(Resource):
 
 # Average prices summary of entire Melbourne: returning each suburb and values
 @api.route('/suburbs/averagePrice')
+@api.response(200, 'Success', [average_price_listing]) 
+@api.response(404, 'Suburb Not Found')
 class suburb_average_all(Resource):
     def get(self):
         housing_median = housing_df.groupby('Suburb', as_index=False)['Price'].median()
@@ -148,6 +172,8 @@ class suburb_average_all(Resource):
 
 
 @api.route('/suburbs/averagePrice/<string:suburb>')
+@api.response(200, 'Success', average_price_listing) 
+@api.response(404, 'Suburb Not Found')
 class suburb_average_singular(Resource):
     def get(self,suburb):
 
@@ -159,11 +185,17 @@ class suburb_average_singular(Resource):
 
         suburb_df = housing_df.loc[housing_df['Suburb'] == suburb]
         housing_median = suburb_df['Price'].median()
-       
-        return int(housing_median)
 
+        suburb_dict = {
+            "Suburb": suburb,
+            "Price": int(housing_median)
+        }
+        
+        return suburb_dict
 
 @api.route('/crimes')
+@api.response(200, 'Success', crime_summary_all) 
+@api.response(400, 'Bad Request')
 class Crime_Suburb_All(Resource):
     def get(self):
         total_crimes = crime_df['Offence Division'].count()
@@ -177,6 +209,9 @@ class Crime_Suburb_All(Resource):
         return crime_dict
 
 @api.route('/crimes/<int:post_code>/')
+@api.response(200, 'Success', crime_summary)
+@api.response(400, 'Bad Request')
+@api.response(404, 'Post code not found')
 class Crime_PostCode(Resource):
     def get(self, post_code):
         if post_code not in crime_df['Postcode'].values:
@@ -198,6 +233,8 @@ class Crime_PostCode(Resource):
 
 #singular value for the time being
 @api.route('/crimes/<string:suburb>/')
+@api.response(200, 'Success',crime_summary) 
+@api.response(400, 'Bad Request')
 class Crime_Suburb(Resource):
     def get(self, suburb):
         # print("suburb is: ", suburb)
@@ -220,7 +257,9 @@ class Crime_Suburb(Resource):
         return crime_dict
 
 
-@api.route('/schools/<string:suburb>')
+@api.route('/schools/<string:suburb>/')
+@api.response(200, 'Success', school_summary)
+@api.response(404, 'Suburb Not Found')
 class School_Suburb(Resource):
     def get(self, suburb):
         suburb = suburb.upper()
@@ -229,7 +268,13 @@ class School_Suburb(Resource):
             api.abort(404,  'Suburb {} does not exist'.format(suburb) )
 
         schools_in_suburb = school_df.loc[school_df['Postal_Town'] == suburb]
-        return dict(schools_in_suburb['School_Name'])
+        schools_list = list(schools_in_suburb['School_Name'].values)
+
+        school_dict = {
+            "schoools": schools_list
+        }
+
+        return school_dict
 
 
 @api.route('/schools/ranking/<string:council>')
