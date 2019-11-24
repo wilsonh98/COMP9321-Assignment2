@@ -183,10 +183,13 @@ class Crime_PostCode(Resource):
             api.abort(404,  'Postcode {} does not exist'.format(post_code) )
 
         crime_in_post_code = crime_df.loc[crime_df['Postcode'] == post_code]
+        suburbs_in_postcode = crime_in_post_code['Suburb/Town Name'].unique()
         total_crimes = crime_in_post_code['Postcode'].count()
         crime_summary = crime_in_post_code.groupby(['Offence Division']).size()
         
         crime_dict = {
+            "suburb": suburbs_in_postcode.tolist(),
+            "postcode": post_code,
             "total": int(total_crimes),
             "crime_summary": crime_summary.to_json()
         }
@@ -203,11 +206,13 @@ class Crime_Suburb(Resource):
             api.abort(404,  'Suburb {} does not exist'.format(suburb) )
         
         crime_in_suburb = crime_df.loc[crime_df['Suburb/Town Name'] == suburb]
-        
+        post_code = crime_in_suburb['Postcode'].unique().tolist()[0]
         total_crimes = crime_in_suburb['Suburb/Town Name'].count()
         crime_summary = crime_in_suburb.groupby(['Offence Division']).size()
         
         crime_dict = {
+            "suburb": suburb,
+            "postcode": int(post_code),
             "total": int(total_crimes),
             "crime_summary": crime_summary.to_json()
         }
@@ -215,7 +220,7 @@ class Crime_Suburb(Resource):
         return crime_dict
 
 
-@api.route('/schools/<string:suburb>/')
+@api.route('/schools/<string:suburb>')
 class School_Suburb(Resource):
     def get(self, suburb):
         suburb = suburb.upper()
@@ -223,7 +228,7 @@ class School_Suburb(Resource):
         if suburb not in school_df['Postal_Town'].values:
             api.abort(404,  'Suburb {} does not exist'.format(suburb) )
 
-        schools_in_suburb = df.loc[df['Postal_Town'] == suburb]
+        schools_in_suburb = school_df.loc[school_df['Postal_Town'] == suburb]
         return dict(schools_in_suburb['School_Name'])
 
 
