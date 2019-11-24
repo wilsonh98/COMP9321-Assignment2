@@ -282,11 +282,11 @@ class School_Suburb(Resource):
 class Schools_ranking(Resource):
     def get(self, council):
         council = council.upper()
-        if council not in list(df['Postal_Town']):
+        if council not in list(school_df['Postal_Town']):
             api.abort(404, 'Council {} does not exist.'.format(council))
 
         args = parser.parse_args()
-        json_str = df.to_json(orient='index')
+        json_str = school_df.to_json(orient='index')
         ds = json.loads(json_str)
         ret = []
         average = args.get('average')
@@ -479,8 +479,10 @@ class Property_Sort(Resource):
         return ret
 
 @api.route('/crimes/timeline/<string:suburb>')
+@api.doc(params={'suburb': 'A suburb located near Melbourne'})
 class Crime_Timeline(Resource):
-    @api.expect(fields.String)
+    @api.response(200, 'Success')
+    @api.response(404, 'Suburb does not exist')
     def get(self, suburb):
         suburb = suburb.upper()
         print("Suburb is: ", suburb)
@@ -492,6 +494,8 @@ class Crime_Timeline(Resource):
 @api.param('prop_type', "A prop type (h, t, u)")
 @api.param('distance', "A float between 0 and 35")
 class Price_Prediction(Resource):
+    @api.response(200, 'Success')
+    @api.response(400, 'Invalid Input')
     def get(self, distance, prop_type):
         try: 
             distance = float(distance)
