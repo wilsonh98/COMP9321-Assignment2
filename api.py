@@ -237,11 +237,11 @@ class School_Suburb(Resource):
 class Schools_ranking(Resource):
     def get(self, council):
         council = council.upper()
-        if council not in list(df['Postal_Town']):
+        if council not in list(school_df['Postal_Town']):
             api.abort(404, 'Council {} does not exist.'.format(council))
 
         args = parser.parse_args()
-        json_str = df.to_json(orient='index')
+        json_str = school_df.to_json(orient='index')
         ds = json.loads(json_str)
         ret = []
         average = args.get('average')
