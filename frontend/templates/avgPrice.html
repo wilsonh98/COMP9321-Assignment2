@@ -22,35 +22,32 @@
         <div class="container-fluid">
             <div class="container-fluid">
                 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-                  <a class="navbar-brand" href="index">Property Price Prediction</a>
+                  <a class="navbar-brand" href="/">Property Price Prediction</a>
                   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                   </button>
                   <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                       <li class="nav-item">
-                        <a class="nav-link" href="buyer">Buyer</a>
+                        <a class="nav-link" href="/predict">Prediction</a>
                       </li>
                       <li class="nav-item active">
-                        <a class="nav-link" href="seller">Seller<span class="sr-only">(current)</span></a>
+                        <a class="nav-link" href="/avgprice">Avg Price<span class="sr-only">(current)</span></a>
                       </li>
                     </ul>
                   </div>
                 </nav>
             </div>
             <div class="d-flex justify-content-center mt-5">
-                <form method='POST' onsubmit="showHide(); return false;">
-                <h2>Property Estimation</h2><br>
+                <form method="POST">
+                <h2>Average Property Price</h2><br>
                 <div class="input-group mb-3">
-                    <input type='text' class="form-control" placeholder="Address" size="100" required>
+                    <input name='suburb' type='text' class="form-control" placeholder="Address" size="100" required>
                     <div class="input-group-append">
                         <input type='submit' value='Check Price' class="btn btn-primary">
                     </div>
                 </div>
                 </form>
-            </div>
-            <div id="result-div" style="margin:auto; width: 50%; justify-content: center; text-align: center; display:none;">
-                <h3>Current Price: $xx,xxx,xxx</h3>
             </div>
         </div>
     </body>

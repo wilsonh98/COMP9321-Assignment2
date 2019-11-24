@@ -11,19 +11,21 @@
         <div class="container-fluid">
             <div class="container-fluid">
                 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-                  <a class="navbar-brand" href="index">Property Price Prediction</a>
+                  <a class="navbar-brand" href="/">Property Price Prediction</a>
                 </nav>
             </div>
-            <div style="width:200px; height:200px; position:absolute; top:0; bottom:0; left:0; right:0; margin: auto;">
-                <div class="d-flex justify-content-center">        
-                    <h1>School Report</h1>
-                </div>
-                <div class="d-flex justify-content-center mt-3">
-                    <form method='POST'>
-                        <input name="suburb" type="text" placeholder="Enter in Suburbs or Postcode">
-                        <input type="submit" value="Submit Suburbs">
-                    </form>
-                </div>
+            <div class="d-flex justify-content-center mt-5">
+                <form method="POST">
+                    <h2>School Ranking</h2><br>
+                    <div class="input-group mb-3">
+                        <input name="council" type="text" class="form-control" placeholder="Council name" size="50" required>
+                        <input name="average" type="checkbox"class="form-control" size="5">
+                        <label for="average">Compute Average</label>
+                        <div class="input-group-append">
+                            <input type="submit" value='Check Rank' class="btn btn-primary">
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </body>
