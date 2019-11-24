@@ -1,15 +1,27 @@
 # Housing Prices API
 
+import json
+import base64
+import io
+import werkzeug
 import pandas as pd
+import numpy as np
+from time import time
+
 from flask import Flask
-from flask import request
+from flask import request, send_file, make_response
 from flask_restplus import Resource, Api, abort
 from flask_restplus import fields
 from flask_restplus import inputs
 from flask_restplus import reqparse
+from flask_profiler import Profiler
+import flask_monitoringdashboard as dashboard
 
-import json
-from time import time
+import matplotlib.pyplot as plt
+from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
 from functools import wraps
 from itsdangerous import SignatureExpired, JSONWebSignatureSerializer, BadSignature
 
@@ -90,12 +102,18 @@ credential_parser = reqparse.RequestParser()
 credential_parser.add_argument('username', type=str)
 credential_parser.add_argument('password', type=str)
 
+parser = reqparse.RequestParser()
+parser.add_argument('average')
+parser.add_argument('start')
+parser.add_argument('limit')
+
+dashboard.bind(app)
 
 @api.route('/token')
 class Token(Resource):
     @api.response(200, 'Successful')
     @api.doc(description="Generates a authentication token")
-    # @api.expect(credential_parser, validate=True)
+    @api.expect(credential_parser, validate=True)
     def get(self):
         args = credential_parser.parse_args()
 
@@ -110,8 +128,55 @@ class Token(Resource):
         return {"message": "authorization has been refused for those credentials."}, 401
 
 
+@api.route('/realEstateStatistics')
+class real_estate(Resource):
+    def get(self):
+        real_estate = housing_df.groupby('SellerG', as_index=False).size().sort_values(ascending=False)
+        return real_estate.to_json()
 
-@api.route('/crime/<int:post_code>/')
+
+# Average prices summary of entire Melbourne: returning each suburb and values
+@api.route('/suburbs/averagePrice')
+class suburb_average_all(Resource):
+    def get(self):
+        housing_median = housing_df.groupby('Suburb', as_index=False)['Price'].median()
+        house_prices = housing_median.round({'Price': -1})
+        house_prices = house_prices.rename(columns={"Prices": "Median House Price"})
+        # print each to as a line in JSON 
+        json = house_prices.to_json(orient='records')
+        return json
+
+
+@api.route('/suburbs/averagePrice/<string:suburb>')
+class suburb_average_singular(Resource):
+    def get(self,suburb):
+
+        housing_df['Suburb'] = housing_df['Suburb'].str.lower()
+
+        if suburb not in housing_df['Suburb'].values:
+            api.abort(404,  'Postcode {} does not exist'.format(suburb) )
+
+
+        suburb_df = housing_df.loc[housing_df['Suburb'] == suburb]
+        housing_median = suburb_df['Price'].median()
+       
+        return int(housing_median)
+
+
+@api.route('/crimes')
+class Crime_Suburb_All(Resource):
+    def get(self):
+        total_crimes = crime_df['Offence Division'].count()
+        crime_summary = crime_df.groupby(['Offence Division']).size()
+        
+        crime_dict = {
+            "total": int(total_crimes),
+            "crime_summary": crime_summary.to_json()
+        }
+
+        return crime_dict
+
+@api.route('/crimes/<int:post_code>/')
 class Crime_PostCode(Resource):
     def get(self, post_code):
         if post_code not in crime_df['Postcode'].values:
@@ -128,9 +193,8 @@ class Crime_PostCode(Resource):
 
         return crime_dict
 
-
 #singular value for the time being
-@api.route('/crime/<string:suburb>/')
+@api.route('/crimes/<string:suburb>/')
 class Crime_Suburb(Resource):
     def get(self, suburb):
         # print("suburb is: ", suburb)
@@ -151,7 +215,6 @@ class Crime_Suburb(Resource):
         return crime_dict
 
 
-
 @api.route('/schools/<string:suburb>/')
 class School_Suburb(Resource):
     def get(self, suburb):
@@ -160,19 +223,79 @@ class School_Suburb(Resource):
         if suburb not in school_df['Postal_Town'].values:
             api.abort(404,  'Suburb {} does not exist'.format(suburb) )
 
-        schools_in_suburb = school_df.loc[school_df['Postal_Town'] == suburb]
+        schools_in_suburb = df.loc[df['Postal_Town'] == suburb]
         return dict(schools_in_suburb['School_Name'])
 
 
-#cant get schools by post code: it is within different csv
-'''@api.route('/schools/<int:post_code>/')
-class School_Suburb(Resource):
-    def get(self,post_code):
-        if post_code not in df['Postcode'].values:
-            api.abort(404,  'Suburb {} does not exist'.format(post_code) )
+@api.route('/schools/ranking/<string:council>')
+@api.param('average', 'int specifying whether to show average or individual school ranking')
+class Schools_ranking(Resource):
+    def get(self, council):
+        council = council.upper()
+        if council not in list(df['Postal_Town']):
+            api.abort(404, 'Council {} does not exist.'.format(council))
 
-        schools_in_suburb = df.loc[df['Postcode'] == post_code]
-        return dict(schools_in_suburb['School_Name']) '''
+        args = parser.parse_args()
+        json_str = df.to_json(orient='index')
+        ds = json.loads(json_str)
+        ret = []
+        average = args.get('average')
+        print(average)
+
+        avg_ranking = 0
+        total = 0
+        count = 0
+        if not average:
+            for item in ds:
+                if ds[item]['Postal_Town'] == council:
+                    school_ranking = {ds[item]['School_Name'] : ds[item]['School_No']}
+                    ret.append(school_ranking)
+        else:
+            for item in ds:
+                if ds[item]['Postal_Town'] == council:
+                    total = ds[item]['School_No']
+                    count += 1
+            avg_ranking = total/count
+            ret.append({'Average Ranking' : str(avg_ranking)})
+        return ret
+
+
+@api.route('/schools')
+@api.param('start', 'start of page')
+@api.param('limit', 'limit of data')
+class Schools_pagination(Resource):
+    def get(self):
+        args = parser.parse_args()
+        start = args.get('start')
+        limit = args.get('limit')
+
+        if not start:
+            start = 0
+
+        if not limit:
+            limit = 20
+
+        count = df.shape[0]
+        if count < int(start):
+            api.abort(404, 'Start value cannot be greater than data size')
+        elif int(limit) < 0:
+            api.abort(404, 'Limit value cannot be negative')
+
+        json_str = df.to_json(orient='index')
+        ds = json.loads(json_str)
+        ret = []
+
+        start_index = 1
+        limit_index = 1
+
+        for item in ds:
+            if start_index >= int(start):
+                ret.append(ds[item])
+                limit_index += 1
+            if limit_index > int(limit):
+                break
+            start_index += 1
+        return ret
 
 
 @api.route('/property_pc/<string:post_codes>/')
@@ -222,11 +345,74 @@ class Property_Suburb(Resource):
     # def put (self, suburbs):
 
 
+@api.route('/schools/graph/<string:suburb>')
+class School_stacked_bar(Resource):
+    def get(self, suburb):
+        suburb = suburb.upper()
+        print("Suburb is: ", suburb)
+        if suburb not in school_df['Postal_Town'].values:
+            api.abort(404, 'Suburb {} does not exist'.format(suburb) )
+        return school_stacked_bar(suburb)
+
+@api.route('/suburbs/graph/<string:suburb>')
+class Housing_pie(Resource):
+    def get(self, suburb):
+        # suburb = suburb.upper()
+        print("Suburb is: ", suburb)
+        if suburb not in melb_df['Suburb'].values:
+            api.abort(404, 'Suburb {} does not exist'.format(suburb) )
+        return housing_pie(suburb)
+
+
+# FUNCTIONS TO PLOT
+
+def housing_pie(suburb="Abbotsford"):
+    # read in and sanitise
+    df = pd.read_csv("melb_data.csv")
+    df = df[['Suburb','Type']]
+    df = df[df["Suburb"] == suburb]
+    
+    # replace values
+    df.loc[df['Type'] == 'h', 'Type'] = 'House'
+    df.loc[df['Type'] == 'u', 'Type'] = 'Unit'
+    df.loc[df['Type'] == 't', 'Type'] = 'Town House'
+    
+    # groupby Type
+    df = df.groupby(['Type']).count()
+    
+    # pie chart plot
+    df.plot.pie(subplots=True, title = "Accommodation type by Suburb")
+    
+    output = io.BytesIO()
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+def school_stacked_bar(suburb="CRAIGIEBURN"):
+    # read in and sanitise
+    df = pd.read_csv("schools.csv", encoding = "ISO-8859-1")
+    df = df[['Education_Sector','School_Type', "Postal_Town"]]
+    df['Postal_Town'] = df['Postal_Town'].str.upper() # change to upper string
+    df = df[df["Postal_Town"] == suburb] # selecting suburb
+    df.insert(1,'Value',1) # inserting a column of ones for pivot
+    
+    # pivot by school_type
+    df = df.pivot_table(index='Education_Sector', columns='School_Type', values='Value', aggfunc=np.sum)
+    df = df.fillna(0) # fill in null values
+    
+    # plotting
+    df.plot.bar(stacked=True, title = "Education Sector and School Type by Suburb")
+    
+    output = io.BytesIO()
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 
 @api.route('/property/sort/<string:sort_by>/<int:asc>')
 class Property_Sort(Resource):
-
      def get(self, sort_by, asc):
         if asc:
             df.sort_values(by=[sort_by], ascending=True, inplace=True)
@@ -242,6 +428,63 @@ class Property_Sort(Resource):
 
         return ret
 
+@api.route('/crimes/timeline/<string:suburb>')
+class Crime_Timeline(Resource):
+    @api.expect(fields.String)
+    def get(self, suburb):
+        suburb = suburb.upper()
+        print("Suburb is: ", suburb)
+        if suburb not in crime_df['Suburb/Town Name'].values:
+            api.abort(404, 'Suburb {} does not exist'.format(suburb) )
+        return crime_timeline(suburb)
+
+@api.route('/prediction/<distance>', defaults={"prop_type": "h"})
+@api.param('prop_type', "A prop type (h, t, u)")
+@api.param('distance', "A float between 0 and 35")
+class Price_Prediction(Resource):
+    def get(self, distance, prop_type):
+        try: 
+            distance = float(distance)
+        except ValueError:
+            api.abort(400, "Not a valid input")
+        if distance > 35 or distance < 0:
+            api.abort(400, 'Distance is outside of CBD prediction')
+        if (prop_type == "h" or prop_type == "u" or prop_type == "t"):
+            price = str(round(price_prediction(dist=distance, prop_type=prop_type), 2)) 
+            price = "$" + price
+            return {"Price": price}   
+        else:
+            api.abort(400, 'Property Type is not valid (h, t, u)')
+
+
+def price_prediction(dist, prop_type="h"):
+    print(prop_type)
+    df = pd.read_csv('melb_data.csv')
+    df = df[(df['Rooms'] >= 2) & (df['Rooms'] <= 4) & (df["Type"] == prop_type)]
+    df = df[(df.Price < np.percentile(df.Price,98)) & (df.Price > np.percentile(df.Price,2)) ]
+    df = df[["Distance", "Price"]]
+    X = df.iloc[:, :-1].values
+    y = df.iloc[:, 1].values
+    regressor = linear_model.LinearRegression()
+    regressor.fit(X,y)
+    ds = [[dist]]
+    y_pred = regressor.predict(ds)
+    return y_pred[0]
+
+def crime_timeline(suburb="abbotsford"):
+    df = pd.read_csv('crime.csv', dtype={"Incidents Recorded": str})
+    df['Incidents Recorded'] = df['Incidents Recorded'].replace(',','', regex=True)
+    df['Incidents Recorded'] = pd.to_numeric(df['Incidents Recorded'])
+    df = df[(df['Suburb/Town Name'] == suburb)]
+    df = df[['Year ending September', 'Incidents Recorded']]
+    df.columns = ['Year', 'Count']
+    df = df.groupby(['Year']).sum()
+    df.plot(kind='line',y='Count',color='red', title="Crime timeline of " + suburb)
+    output = io.BytesIO()
+    plt.savefig(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
 
 
 if __name__ == "__main__":
@@ -251,13 +494,16 @@ if __name__ == "__main__":
     df['YearBuilt'] = df['YearBuilt'].fillna(0)
     df['Date'] =pd.to_datetime(df.Date)
     #df.astype({'Postcode':'int64'}).dtypes
+
+    housing_df = df
     
     school_df = pd.read_csv('schools.csv', encoding = "ISO-8859-1")
     school_df['Postal_Town'] = school_df['Postal_Town'].str.upper()
 
-    crime_temp = pd.read_excel('crime.xlsx')
+    crime_temp = pd.read_csv('crime.csv')
     col_list = ['Suburb/Town Name', 'Postcode', 'Offence Division']
     crime_df = crime_temp[col_list]
     
+    melb_df = pd.read_csv("melb_data.csv")
     
     app.run(debug=True)
