@@ -1,0 +1,502 @@
+{
+    "swagger": "2.0",
+    "basePath": "/",
+    "paths": {
+        "/crimes": {
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Overall Crime Report"
+                        }
+                    }
+                },
+                "operationId": "get_crime__suburb__all",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/crimes/timeline/{suburb}": {
+            "parameters": [
+                {
+                    "description": "A suburb located near Melbourne",
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Suburb does not exist"
+                    },
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_crime__timeline",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/crimes/{post_code}/": {
+            "parameters": [
+                {
+                    "name": "post_code",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Post code not found"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Crime Report"
+                        }
+                    }
+                },
+                "operationId": "get_crime__post_code",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/crimes/{suburb}/": {
+            "parameters": [
+                {
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Crime Report"
+                        }
+                    }
+                },
+                "operationId": "get_crime__suburb",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/prediction/{distance}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "A float between 0 and 35",
+                    "name": "distance",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "in": "query",
+                    "description": "A prop type (h, t, u)",
+                    "name": "prop_type",
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Invalid Input"
+                    },
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_price__prediction",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/property/sort/{sort_by}/{asc}": {
+            "parameters": [
+                {
+                    "name": "sort_by",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "name": "asc",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_property__sort",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/property/{suburbs}/": {
+            "parameters": [
+                {
+                    "name": "suburbs",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_property__suburb",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/property_pc/{post_codes}/": {
+            "parameters": [
+                {
+                    "name": "post_codes",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_property__post_code",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/realEstateStatistics": {
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_real_estate",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/schools": {
+            "parameters": [
+                {
+                    "in": "query",
+                    "description": "limit of data",
+                    "name": "limit",
+                    "type": "string"
+                },
+                {
+                    "in": "query",
+                    "description": "start of page",
+                    "name": "start",
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_schools_pagination",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/schools/graph/{suburb}": {
+            "parameters": [
+                {
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_school_stacked_bar",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/schools/ranking/{council}": {
+            "parameters": [
+                {
+                    "in": "query",
+                    "description": "int specifying whether to show average or individual school ranking",
+                    "name": "average",
+                    "type": "string"
+                },
+                {
+                    "name": "council",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_schools_ranking",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/schools/{suburb}/": {
+            "parameters": [
+                {
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Suburb Not Found"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/School Summary"
+                        }
+                    }
+                },
+                "operationId": "get_school__suburb",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/suburbs/averagePrice": {
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Suburb Not Found"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Price Summary"
+                            }
+                        }
+                    }
+                },
+                "operationId": "get_suburb_average_all",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/suburbs/averagePrice/{suburb}": {
+            "parameters": [
+                {
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Suburb Not Found"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Price Summary"
+                        }
+                    }
+                },
+                "operationId": "get_suburb_average_singular",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/suburbs/graph/{suburb}": {
+            "parameters": [
+                {
+                    "name": "suburb",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "get_housing_pie",
+                "tags": [
+                    "Housing"
+                ]
+            }
+        },
+        "/token": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Successful"
+                    }
+                },
+                "description": "Generates a authentication token",
+                "operationId": "get_token",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "type": "string"
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "type": "string"
+                    }
+                ],
+                "tags": [
+                    "Housing"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "Melbourne Dataset",
+        "version": "1.0",
+        "description": "<description here>"
+    },
+    "produces": [
+        "application/json"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "tags": [
+        {
+            "name": "Housing",
+            "description": "Default namespace"
+        }
+    ],
+    "definitions": {
+        "Price Summary": {
+            "properties": {
+                "Suburb": {
+                    "type": "string",
+                    "default": "ALTONA NORTH"
+                },
+                "Price": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "Overall Crime Report": {
+            "properties": {
+                "total": {
+                    "type": "integer"
+                },
+                "crime_summary": {
+                    "type": "string",
+                    "default": "{\"A Crimes against the person\":72677}"
+                }
+            },
+            "type": "object"
+        },
+        "Crime Report": {
+            "properties": {
+                "suburb": {
+                    "type": "string",
+                    "default": "ALTONA NORTH"
+                },
+                "postcode": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "crime_summary": {
+                    "type": "string",
+                    "default": "{\"A Crimes against the person\":72677}"
+                }
+            },
+            "type": "object"
+        },
+        "School Summary": {
+            "properties": {
+                "schools": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "type": "object"
+        }
+    },
+    "responses": {
+        "ParseError": {
+            "description": "When a mask can't be parsed"
+        },
+        "MaskError": {
+            "description": "When any error occurs on mask"
+        }
+    }
+}
